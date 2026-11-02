@@ -1,3 +1,4 @@
+//Clase abstracta
 class Tarea{
     method recursoQueProduce(tiempo) = 50 * (tiempo - self.desgaste(tiempo)) * self.esfuerzo()
 
@@ -6,31 +7,40 @@ class Tarea{
 
 }       
 
+//Clase hija de Tarea y abstracta
 class Siembra inherits Tarea {
     var property esfuerzo = 0  
 
-    override method desgaste(tiempo) {
-        return 
-            if(self.esJornadaNormal(tiempo)){
-                1
-            } else {
-                0
-            }
-    }
-    method esJornadaNormal(tiempo)
+    override method desgaste(tiempo) =  1 + (tiempo - self.horasDeJornadaNormal()).max(0)
+    method horasDeJornadaNormal()
 }
 
-class valle inherits Siembra{
-    var property esEpocaSeca = true 
+class Valle inherits Siembra{
+    var property estacion = epocaDeLluvia 
 
-    override method esJornadaNormal(tiempo) = tiempo < 8 && esEpocaSeca
+    override method desgaste(tiempo) = if(estacion.puedeSembrarse()) {super(tiempo)} else {0}
+
+    method cambiarAEpocaSeca() {estacion = epocaDeSequia}
+    method cambiarAEpocaDeLluvia() {estacion = epocaDeLluvia}
+
+    override method horasDeJornadaNormal() = 8
 }
 
-class terrazas inherits Siembra{
-    override method esJornadaNormal(tiempo) = tiempo <= 8
+object epocaDeLluvia {
+    method puedeSembrarse() = false
+}
+object epocaDeSequia {
+  method puedeSembrarse() = true
+}
+
+class Terrazas inherits Siembra{
     override method recursoQueProduce(tiempo) = super(tiempo) * 3
+
+    override method horasDeJornadaNormal() = 6
 }
 
+
+//Clase hija de tarea y no abstracta
 class Mensaje inherits Tarea {
     override method desgaste(tiempo) = tiempo / 4
     override method esfuerzo() = 1.4
@@ -41,6 +51,10 @@ class Imperial inherits Mensaje {
     override method desgaste(tiempo) = (super(tiempo) - 2).max(1)
     override method esfuerzo() = 1.8
 }
+
+
+
+
 
 //diagramas estaticos:
     /*solo los metodos principales 
