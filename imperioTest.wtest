@@ -2,14 +2,30 @@ import imperio.*
 import habitantes.*
 
 describe "Imperio Inca" {
+  //Constantes de la clases Tarea, Siembra y Mensaje
     const siembraPapa = new Valle(esfuerzo = 1.2)
     const siembraMaiz = new Terrazas(esfuerzo = 1.5)
     const rutaTambo = new Mensaje()
     const caminoDelSapa = new Imperial()
 
-    method initialize(){
-      siembraPapa.cambiarAEpocaSeca()
-    }
+    const construccionDeAndenes = new Valle(esfuerzo = 4.5) //le agrego ese esfuerzo ya que el enunciado no indica cuanto. 
+    const construccionDelTemploDelSol = new Valle(esfuerzo = 4.1) //le agrego ese esfuerzo ya que el enunciado no indica cuanto.      
+
+  //Constante de la clase Campesino
+    const cusi = new Campesino(energia = 100, tiempo = 4)
+    const tupac = new Elite(energia = 200)
+  
+  //Constantes de la clase Ayllus y Colca
+    const colcaAgricola = new Colca(tareas = #{siembraPapa, construccionDeAndenes, construccionDelTemploDelSol})
+    const colcaCentral = new Colca(tareas = #{rutaTambo, caminoDelSapa})
+
+    const aylluReal = new Ayllus(colcas = #{colcaAgricola, colcaCentral})
+
+  method initialize(){
+    siembraPapa.cambiarAEpocaSeca()
+    construccionDeAndenes.cambiarAEpocaSeca()
+    construccionDelTemploDelSol.cambiarAEpocaSeca()
+  }
 
   test "Tareas de siembra" {
     assert.equals(180, siembraPapa.recursoQueProduce(4))
@@ -28,14 +44,75 @@ describe "Imperio Inca" {
     assert.equals(810, caminoDelSapa.recursoQueProduce(10))
   }
 
-  test "Habitantes" {
-    const cusi = new Campesino(energia = 100, tiempo = 4)
+  test "cusi puede realizar tareas de siembra papa" {
     cusi.aplicarTarea(siembraPapa)
-    assert.equals(180, siembraPapa.recursoQueProduce(4))
     assert.equals(82, cusi.energia())
-    cusi.energia(100)
+  }
+
+  test "cusi puede realizar tareas mensajeria" {
     cusi.aplicarTarea(rutaTambo)
     assert.equals(79, cusi.energia())
+  } 
 
+  test "cusi no puede realizar tareas de siembra papa con 15 de energia" {
+    cusi.energia(15)
+    assert.throwsException({cusi.aplicarTarea(siembraPapa)})
+    assert.equals(15, cusi.energia())
+  }
+
+  test "cusi no puede realizar tareas de mensajeria con 15 de energia" {
+    cusi.energia(15)
+    assert.throwsException({cusi.aplicarTarea(rutaTambo)})
+    assert.equals(15, cusi.energia())
+  }
+
+  test "tupac puede realizar tareas de siembra maiz" {
+    tupac.aplicarTarea(siembraMaiz)
+    assert.equals(111.25, tupac.energia())
+  }
+
+  test "tupac puede realizar tareas Camino del Sapa Inca" {
+    tupac.aplicarTarea(caminoDelSapa)
+    assert.equals(137.5, tupac.energia())
+  }
+
+  test "La mejor colca de ayllu real para tupac es la Agricola" {
+    assert.equals(3430, colcaAgricola.recursosQueProducePorTodasLasTareas(tupac))
+    assert.equals(1335, colcaCentral.recursosQueProducePorTodasLasTareas(tupac))
+    assert.equals(colcaAgricola, aylluReal.mejorColcaPara(tupac))
+  }
+
+  test "La mejor colca de ayllu real para cusi es la Agricola" {
+    assert.equals(1470, colcaAgricola.recursosQueProducePorTodasLasTareas(cusi))
+    assert.equals(480, colcaCentral.recursosQueProducePorTodasLasTareas(cusi))
+    assert.equals(colcaAgricola, aylluReal.mejorColcaPara(cusi))
+  }
+
+  test "Para tupac no hay colcas suaves en ayllu real" {
+    assert.equals(#{}, aylluReal.colcasSuavesPara(tupac))
+  }
+
+  test "Para cusi hay una colca suave en ayllu real que es la colca agricola" {
+    assert.equals(180, siembraPapa.recursoQueProduce(cusi.tiempo()))
+    assert.equals(#{colcaAgricola}, aylluReal.colcasSuavesPara(cusi))
+  }
+
+  test "Para tupac las tareas mas exigentes en ayllu real son Construcción de Andenes en el Valle Sagrado y en Templo del Sol." {
+    assert.equals(180, siembraPapa.recursoQueProduce(cusi.tiempo()))
+    assert.equals(#{colcaAgricola}, aylluReal.colcasSuavesPara(cusi))
+  }
+
+  test "Para tupac las tareas mas exigentes del ayllu real son andenes (agricola) y camino del sapa (central)" {
+    const exigentes = aylluReal.tareasMasExigentesPara(tupac)
+    assert.equals(2, exigentes.size())
+    assert.that(exigentes.contains(construccionDeAndenes))
+    assert.that(exigentes.contains(caminoDelSapa))
+  }
+
+  test "Para cusi las tareas mas exigentes del ayllu real son andenes (agricola) y camino del sapa (central)" {
+    const exigentes = aylluReal.tareasMasExigentesPara(cusi)
+    assert.equals(2, exigentes.size())
+    assert.that(exigentes.contains(construccionDeAndenes))
+    assert.that(exigentes.contains(caminoDelSapa))
   }
 }
